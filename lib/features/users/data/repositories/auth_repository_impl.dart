@@ -1,56 +1,48 @@
-import '../../domain/entities/user_entity.dart';
-import '../../domain/entities/login_request_entity.dart';
-import '../../domain/repositories/auth_repository.dart';
-import '../datasources/auth_local_datasource.dart';
-import '../datasources/auth_remote_datasource.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../models/user_model.dart';
 import '../models/login_request_model.dart';
 
-class AuthRepositoryImpl implements AuthRepository {
-  final AuthRemoteDataSource remoteDataSource;
-  final AuthLocalDataSource localDataSource;
+class AuthRepository {
+  final String baseUrl = 'https://adamix.net/medioambiente/auth';
 
-  AuthRepositoryImpl({
-    required this.remoteDataSource,
-    required this.localDataSource,
-  });
-
-  @override
-  Future<UserEntity> login(LoginRequestEntity loginRequest) async {
-    try {
-      final loginModel = LoginRequestModel(
-        email: loginRequest.email,
-        password: loginRequest.password,
-      );
-
-      final userModel = await remoteDataSource.login(loginModel);
-
-      // Guardar usuario localmente
-      await localDataSource.guardarUsuario(userModel);
-
-      return userModel;
-    } catch (e) {
-      throw Exception('Error en login: $e');
+  Future<UserModel> login(LoginRequestModel loginRequest) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: utf8.encode(json.encode(loginRequest.toJson())),
+    );
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(response.body);
+      return UserModel.fromJson(jsonResponse);
+    } else if (response.statusCode == 401) {
+      throw Exception(utf8.encode(json.encode(loginRequest.toJson())));
+    } else if (response.statusCode == 422) {
+      final error = json.decode(response.body);
+      throw Exception(error['message'] ?? 'Datos inválidos');
+    } else {
+      throw Exception('Error del servidor: ${response.statusCode}');
     }
   }
 
-  @override
+  Future<void> recoverPassword(String email) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/recover-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'email': email}),
+    );
+
+    if (response.statusCode != 200) {
+      final error = json.decode(response.body);
+      throw Exception(
+          error['message'] ?? 'Error al enviar email de recuperación');
+    }
+  }
+
   Future<void> logout() async {
-    await localDataSource.eliminarUsuario();
-  }
-
-  @override
-  Future<void> recuperarPassword(String email) async {
-    await remoteDataSource.recuperarPassword(email);
-  }
-
-  @override
-  Future<UserEntity?> obtenerUsuarioActual() async {
-    return await localDataSource.obtenerUsuario();
-  }
-
-  @override
-  Future<bool> estaAutenticado() async {
-    final user = await localDataSource.obtenerUsuario();
-    return user != null && user.isTokenValid;
+    final response = await http.post(
+      Uri.parse('$baseUrl/logout'),
+      headers: {'Content-Type': 'application/json'},
+    );
   }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../domain/entities/miembro_team_entity.dart';
+import '../../domain/entities/miembro_entity.dart';
 
 class MiembroTeamCard extends StatelessWidget {
   final MiembroTeamEntity miembro;
