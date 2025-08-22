@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/miembro_entity.dart';
 
 class MiembroTeamCard extends StatelessWidget {
-  final MiembroTeamEntity miembro;
+  final MiembroEntity miembro;
 
   const MiembroTeamCard({
     super.key,
@@ -91,7 +91,7 @@ class MiembroTeamCard extends StatelessWidget {
                       fontSize: 14,
                       color: Colors.grey[600],
                     ),
-                    maxLines: 2,
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],

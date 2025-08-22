@@ -1,21 +1,19 @@
-import 'package:mmarn/features/team/data/datasources/team_remote_datasource.dart';
-import 'package:mmarn/features/team/domain/entities/miembro_team_entity.dart';
-import 'package:mmarn/features/team/domain/repositories/team_repository.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:mmarn/features/team/domain/entities/miembro_entity.dart';
 
-class TeamRepositoryImpl implements TeamRepository {
-  final TeamRemoteDatasource remoteDataSource;
-
-  TeamRepositoryImpl({required this.remoteDataSource});
+class TeamRepository {
+  final String apiUrl = 'https://adamix.net/medioambiente/equipo';
 
   @override
-  Future<List<MiembroTeamEntity>> getTeam({String? departamento}) async {
-    try {
-      final equipoModels = await remoteDataSource.getTeam(
-        departamento: departamento,
-      );
-      return equipoModels;
-    } catch (e) {
-      throw Exception('Error en el repositorio: $e');
+  Future<List<MiembroEntity>> getTeam({String? departamento}) async {
+    final response = await http.get(Uri.parse(apiUrl));
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.map((json) => MiembroEntity.fromJson(json)).toList();
+    } else {
+      throw Exception('Error al cargar equipo: ${response.body}');
     }
   }
 }

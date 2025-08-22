@@ -1,5 +1,6 @@
+import 'package:mmarn/features/users/data/repositories/password_repository.dart';
+
 import '../entities/change_password_request_entity.dart';
-import '../repositories/password_repository.dart';
 
 class CambiarPasswordUseCase {
   final PasswordRepository repository;
@@ -7,7 +8,6 @@ class CambiarPasswordUseCase {
   CambiarPasswordUseCase(this.repository);
 
   Future<void> call(ChangePasswordRequestEntity request) async {
-    // Validaciones de negocio
     if (!request.passwordsMatch) {
       throw Exception('Las contraseñas no coinciden');
     }
@@ -20,6 +20,6 @@ class CambiarPasswordUseCase {
       throw Exception('La nueva contraseña debe ser diferente a la actual');
     }
 
-    return repository.cambiarPassword(request);
+    // return repository.changePassword(request, token);
   }
 }

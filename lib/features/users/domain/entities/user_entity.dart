@@ -1,22 +1,11 @@
 class UserEntity {
-  final String id;
-  final String email;
   final String nombre;
-  final String? token;
-  final String? refreshToken;
-  final DateTime? fechaExpiracion;
+  final String correo;
+  final String token;
 
-  const UserEntity({
-    required this.id,
-    required this.email,
+  UserEntity({
     required this.nombre,
-    this.token,
-    this.refreshToken,
-    this.fechaExpiracion,
+    required this.correo,
+    required this.token,
   });
-
-  bool get isTokenValid {
-    if (token == null || fechaExpiracion == null) return false;
-    return DateTime.now().isBefore(fechaExpiracion!);
-  }
 }

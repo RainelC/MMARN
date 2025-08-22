@@ -1,36 +1,35 @@
-import 'package:mmarn/features/users/data/datasources/auth_local_datasource.dart';
-import '../../domain/entities/change_password_request_entity.dart';
-import '../../domain/repositories/password_repository.dart';
-import '../datasources/password_remote_datasource.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../models/change_password_request_model.dart';
 
-class PasswordRepositoryImpl implements PasswordRepository {
-  final PasswordRemoteDataSource remoteDataSource;
-  final AuthLocalDataSource authLocalDataSource;
+class PasswordRepository {
+  final http.Client client;
+  static const String baseUrl = 'https://adamix.net/medioambiente/auth';
 
-  PasswordRepositoryImpl({
-    required this.remoteDataSource,
-    required this.authLocalDataSource,
-  });
+  PasswordRepository({required this.client});
 
-  @override
-  Future<void> cambiarPassword(ChangePasswordRequestEntity request) async {
-    try {
-      // Obtener el token del usuario actual
-      final user = await authLocalDataSource.obtenerUsuario();
-      if (user == null || user.token == null) {
-        throw Exception('Usuario no autenticado');
-      }
+  Future<void> changePassword(ChangePasswordRequestModel request, String token) async {
+    final response = await client.post(
+      Uri.parse('$baseUrl/change-password'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode(request.toJson()),
+    );
 
-      final requestModel = ChangePasswordRequestModel(
-        currentPassword: request.currentPassword,
-        newPassword: request.newPassword,
-        confirmPassword: request.confirmPassword,
-      );
-
-      await remoteDataSource.cambiarPassword(requestModel, user.token!);
-    } catch (e) {
-      throw Exception('Error al cambiar contraseña: $e');
+    if (response.statusCode == 200) {
+      return;
+    } else if (response.statusCode == 401) {
+      throw Exception('Tu sesión ha expirado. Inicia sesión nuevamente');
+    } else if (response.statusCode == 422) {
+      final error = json.decode(response.body);
+      throw Exception(error['message'] ?? 'Datos inválidos');
+    } else if (response.statusCode == 400) {
+      final error = json.decode(response.body);
+      throw Exception(error['message'] ?? 'Contraseña actual incorrecta');
+    } else {
+      throw Exception('Error del servidor: ${response.statusCode}');
     }
   }
 }

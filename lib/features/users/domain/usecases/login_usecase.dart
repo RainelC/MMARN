@@ -1,13 +1,13 @@
+import 'package:mmarn/features/users/domain/repository/auth_repository.dart';
 import '../entities/user_entity.dart';
-import '../entities/login_request_entity.dart';
-import '../repositories/auth_repository.dart';
+import '../../data/models/login_request_model.dart';
 
 class LoginUseCase {
   final AuthRepository repository;
 
   LoginUseCase(this.repository);
 
-  Future<UserEntity> call(LoginRequestEntity loginRequest) {
+  Future<UserEntity> call(LoginRequestModel loginRequest) {
     return repository.login(loginRequest);
   }
 }

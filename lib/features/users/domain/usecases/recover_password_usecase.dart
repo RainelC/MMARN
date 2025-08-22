@@ -1,11 +1,11 @@
-import '../repositories/auth_repository.dart';
+import 'package:mmarn/features/users/domain/repository/auth_repository.dart';
 
-class RecuperarPasswordUseCase {
+class RecoverPasswordUseCase {
   final AuthRepository repository;
 
-  RecuperarPasswordUseCase(this.repository);
+  RecoverPasswordUseCase(this.repository);
 
-  Future<void> call(String email) {
-    return repository.recuperarPassword(email);
+  Future<void> call(String correo) {
+    return repository.recoverPassword(correo);
   }
 }

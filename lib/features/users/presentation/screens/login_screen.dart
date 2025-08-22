@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mmarn/core/constants/app_colors.dart';
+import 'package:mmarn/features/users/data/models/login_request_model.dart';
+import 'package:mmarn/features/users/domain/usecases/recover_password_usecase.dart';
+import '../../data/repositories/auth_repository_impl.dart';
+import '../../domain/usecases/login_usecase.dart';
 import '../widgets/custom_text_field.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -14,78 +18,82 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _recoverEmailController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
+
+  final loginUseCase = LoginUseCase(AuthRepositoryImpl());
+  final recoverPasswordUseCase = RecoverPasswordUseCase(AuthRepositoryImpl());
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _recoverEmailController.dispose();
     super.dispose();
   }
 
+  void _login() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await loginUseCase(LoginRequestModel(
+        correo: _emailController.text,
+        password: _passwordController.text,
+      ));
+
+      if (mounted) {
+        context.go('/home');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al iniciar sesión: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   void _showRecoverPasswordDialog() {
+    final recoverCorreoController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Recuperar Contraseña'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Ingresa tu email para recibir instrucciones de recuperación:'),
-            const SizedBox(height: 16),
-            CustomTextField(
-              controller: _recoverEmailController,
-              label: 'Email',
-              keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'El email es requerido';
-                }
-                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                  return 'Ingresa un email válido';
-                }
-                return null;
-              },
-            ),
-          ],
+        content: TextField(
+          controller: recoverCorreoController,
+          decoration: const InputDecoration(labelText: 'Correo electrónico'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
+            child: const Text('Cancelar', style: TextStyle(color: AppColors.primaryColor),),
           ),
-          Consumer<AuthProvider>(
-            builder: (context, authProvider, child) {
-              return ElevatedButton(
-                onPressed: authProvider.isRecoveringPassword
-                    ? null
-                    : () async {
-                  if (_recoverEmailController.text.isNotEmpty) {
-                    final success = await authProvider.recuperarPassword(
-                      _recoverEmailController.text,
-                    );
-                    if (success && mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Email de recuperación enviado'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    }
-                  }
-                },
-                child: authProvider.isRecoveringPassword
-                    ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-                    : const Text('Enviar'),
+          ElevatedButton(
+            onPressed: () async {
+              final correo =recoverCorreoController.text;
+              if (correo.isEmpty) return;
+
+              try {
+                await recoverPasswordUseCase(correo);
+              }catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error al recuperar contraseña: $e')),
+                );
+                return;
+              }
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Instrucciones enviadas por email')),
               );
+              Navigator.pop(context);
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryColor,
+            ),
+            child: const Text('Enviar', style: TextStyle(color: Colors.white),),
           ),
         ],
       ),
@@ -104,54 +112,28 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 60),
-
-                // Logo o título
-                const Icon(
-                  Icons.eco,
-                  size: 80,
-                  color: Colors.green,
-                ),
+                const Icon(Icons.eco, size: 80, color: Colors.green),
                 const SizedBox(height: 16),
                 const Text(
                   'MMARN',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.green),
                 ),
-                const Text(
-                  'Ministerio de Medio Ambiente',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
-                ),
-
-                const SizedBox(height: 60),
-
-                // Campo de email
+                const SizedBox(height: 16),
                 CustomTextField(
                   controller: _emailController,
-                  label: 'Email',
+                  label: 'Correo electrónico',
                   prefixIcon: Icons.email,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'El email es requerido';
-                    }
+                    if (value == null || value.isEmpty) return 'El correo es requerido';
                     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                      return 'Ingresa un email válido';
+                      return 'Correo inválido';
                     }
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 16),
-
-                // Campo de contraseña
                 CustomTextField(
                   controller: _passwordController,
                   label: 'Contraseña',
@@ -160,112 +142,34 @@ class _LoginScreenState extends State<LoginScreen> {
                   suffixIcon: IconButton(
                     icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
                     onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
+                      setState(() => _obscurePassword = !_obscurePassword);
                     },
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'La contraseña es requerida';
-                    }
-                    if (value.length < 6) {
-                      return 'La contraseña debe tener al menos 6 caracteres';
-                    }
+                    if (value == null || value.isEmpty) return 'La contraseña es requerida';
+                    if (value.length < 6) return 'Mínimo 6 caracteres';
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 24),
-
-                // Botón de login
-                Consumer<AuthProvider>(
-                  builder: (context, authProvider, child) {
-                    return ElevatedButton(
-                      onPressed: authProvider.isLoading
-                          ? null
-                          : () async {
-                        if (_formKey.currentState!.validate()) {
-                          final success = await authProvider.login(
-                            _emailController.text,
-                            _passwordController.text,
-                          );
-
-                          if (success && mounted) {
-                            Navigator.pushReplacementNamed(context, '/home');
-                          }
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: authProvider.isLoading
-                          ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                          : const Text(
-                        'Iniciar Sesión',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    );
-                  },
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  )
+                      : const Text('Iniciar sesión', style: TextStyle(fontSize: 16)),
                 ),
-
                 const SizedBox(height: 16),
-
-                // Link para recuperar contraseña
                 TextButton(
                   onPressed: _showRecoverPasswordDialog,
                   child: const Text('¿Olvidaste tu contraseña?'),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Mostrar errores
-                Consumer<AuthProvider>(
-                  builder: (context, authProvider, child) {
-                    if (authProvider.error != null) {
-                      return Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.red[50],
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.red[200]!),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.error, color: Colors.red[600]),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                authProvider.error!,
-                                style: TextStyle(color: Colors.red[700]),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: authProvider.limpiarError,
-                              iconSize: 18,
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
                 ),
               ],
             ),

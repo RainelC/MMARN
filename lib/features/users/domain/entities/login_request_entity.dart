@@ -1,9 +1,9 @@
 class LoginRequestEntity {
-  final String email;
+  final String correo;
   final String password;
 
   const LoginRequestEntity({
-    required this.email,
+    required this.correo,
     required this.password,
   });
 }

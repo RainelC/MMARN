@@ -24,7 +24,8 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
     _controller = YoutubePlayerController(
       initialVideoId: videoId,
       flags: const YoutubePlayerFlags(
-        autoPlay: true,
+        loop: true,
+        autoPlay: false,
         mute: true,
       ),
     );
