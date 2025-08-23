@@ -23,7 +23,6 @@ class AuthRepositoryImpl implements AuthRepository {
     if (response.statusCode == 200) {
       final jsonResponse = jsonDecode(response.body);
 
-      // Guardar token si existe
       if (jsonResponse['token'] != null) {
         await storage.saveToken(jsonResponse['token']);
       }
@@ -60,7 +59,13 @@ class AuthRepositoryImpl implements AuthRepository {
       headers: {'Content-Type': 'application/json'},
     );
 
-    // Eliminar token local
     await storage.deleteToken();
   }
+
+  @override
+  Future<bool> isLoggedIn() async {
+    final token = await storage.getToken();
+    return token != null && token.isNotEmpty;
+  }
+
 }

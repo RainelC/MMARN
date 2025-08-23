@@ -1,17 +1,17 @@
-import '../../domain/entities/change_password_request_entity.dart';
+import 'package:mmarn/features/users/domain/entities/change_password_request_entity.dart';
 
 class ChangePasswordRequestModel extends ChangePasswordRequestEntity {
   const ChangePasswordRequestModel({
-    required super.currentPassword,
-    required super.newPassword,
-    required super.confirmPassword,
+    required super.correo,
+    required super.codigo,
+    required super.nuevaPassword,
   });
 
   Map<String, dynamic> toJson() {
     return {
-      'current_password': currentPassword,
-      'new_password': newPassword,
-      'new_password_confirmation': confirmPassword,
+      'correo': correo,
+      'codigo': codigo,
+      'nueva_password': nuevaPassword,
     };
   }
 }

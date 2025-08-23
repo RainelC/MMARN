@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mmarn/core/constants/app_colors.dart';
+import 'package:mmarn/core/storage/secure_storage_service.dart';
 import 'package:mmarn/features/users/data/models/login_request_model.dart';
 import 'package:mmarn/features/users/domain/usecases/recover_password_usecase.dart';
 import '../../data/repositories/auth_repository_impl.dart';
@@ -21,8 +22,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  final loginUseCase = LoginUseCase(AuthRepositoryImpl());
-  final recoverPasswordUseCase = RecoverPasswordUseCase(AuthRepositoryImpl());
+  final loginUseCase = LoginUseCase(AuthRepositoryImpl(SecureStorageService()));
+  final recoverPasswordUseCase = RecoverPasswordUseCase(AuthRepositoryImpl(SecureStorageService()));
 
   @override
   void dispose() {
@@ -103,6 +104,9 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Iniciar sesión', style: TextStyle(color: AppColors.primaryColor,fontWeight: FontWeight.bold,fontSize: 25, )),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),

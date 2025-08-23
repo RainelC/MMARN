@@ -5,4 +5,5 @@ abstract class AuthRepository {
   Future<UserEntity> login(LoginRequestModel loginRequest);
   Future<void> recoverPassword(String email);
   Future<void> logout();
+  Future<bool> isLoggedIn();
 }

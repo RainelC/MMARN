@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mmarn/core/constants/app_colors.dart';
+import 'package:mmarn/core/storage/secure_storage_service.dart';
+import 'package:mmarn/features/home/presentation/widgets/home_btns.dart';
+import 'package:mmarn/features/users/data/repositories/auth_repository_impl.dart';
 import 'package:mmarn/shared/widgets/logo_banner.dart';
 import 'package:mmarn/shared/widgets/bottom_navbar.dart';
 import 'package:go_router/go_router.dart';
@@ -29,60 +32,51 @@ class HomeScreen extends StatelessWidget {
       ),
     ];
 
-    return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            LogoBanner(imageUrl: 'https://ambiente.gob.do/app/uploads/2023/06/page-logo-3-1.svg'),
-            HomeSlider(messages: messages),
-            const SizedBox(height: 20),
+    return FutureBuilder<bool>(
+        future: AuthRepositoryImpl(SecureStorageService()).isLoggedIn(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const SizedBox(height: 70); // o un loader
+          }
 
-            // Botones
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Center(
-                child: Row(
-                  spacing: 5,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () => context.go('/home/about'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryColor,
-                        minimumSize: const Size(20, 50),
-                      ),
-                      child: const Text("Sobre Nosotros", style: TextStyle(color: Colors.white),),
-                    ),
-                    ElevatedButton(
-                      onPressed: () => context.go('/home/team'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryColor,
-                        minimumSize: const Size(20, 50),
-                      ),
-                      child: const Text("Equipo", style: TextStyle(color: Colors.white),),
-                    ),
-                    ElevatedButton(
-                      onPressed: () => context.go('/home/about_team'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryColor,
-                        minimumSize: const Size(20, 50),
-                      ),
-                      child: const Text("Acerca de", style: TextStyle(color: Colors.white),),
-                    ),
-                  ],
-                ),
+          final isLoggedIn = snapshot.data!;
+          return Scaffold(
+            body: SingleChildScrollView(
+              child: Column(
+                children: [
+                  LogoBanner(
+                      imageUrl: 'https://ambiente.gob.do/app/uploads/2023/06/LogoMMA-02-1.png'),
+                  HomeSlider(messages: messages, porcentaje: isLoggedIn ? 0.7 : 0.65),
+                  const SizedBox(height: 20),
+                  if (!isLoggedIn) HomeBtns()
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-      floatingActionButton: ElevatedButton.icon(
-          icon: const Icon(Icons.login, color: AppColors.primaryColor,size: 25,),
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent),
-          label: const Text("Login",style: TextStyle(color: AppColors.primaryColor, fontSize: 18)),
-          onPressed: () { context.go("/login"); }
-      ),
-      bottomNavigationBar: BottomNavBar(currentRoute: currentRoute),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
+            floatingActionButton: ElevatedButton.icon(
+                icon: Icon(isLoggedIn ? Icons.logout : Icons.login, color: AppColors.primaryColor, size: 25,),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent),
+                label: Text(isLoggedIn ? "Logout" : "Login", style: TextStyle(
+                    color: AppColors.primaryColor, fontSize: 18)),
+                onPressed: () {
+                  isLoggedIn ? context.go("/logout") : context.go("/home/login");
+                }
+            ),
+            bottomNavigationBar: BottomNavBar(currentRoute: currentRoute),
+            floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
+            persistentFooterButtons: [ElevatedButton.icon(
+                icon: Icon(Icons.password, color: AppColors.primaryColor, size: 25,),
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor),
+                label: Text("Cambiar contraseña", style: TextStyle(
+                    color: Colors.white, fontSize: 18)),
+                onPressed: () {
+                  context.go("/change_password");
+                }
+            ),],
+          );
+        }
     );
   }
 }

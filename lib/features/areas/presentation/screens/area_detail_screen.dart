@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mmarn/core/constants/app_colors.dart';
 import '../../domain/entities/area_protegida_entity.dart';
 
 class AreaDetailScreen extends StatelessWidget {
@@ -9,7 +10,7 @@ class AreaDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(area.nombre)),
+      appBar: AppBar(title: Text(area.nombre, style: TextStyle(color: AppColors.primaryColor,fontWeight: FontWeight.bold,fontSize: 25, ),)),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16),

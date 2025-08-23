@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:mmarn/core/constants/app_colors.dart';
 import '../../domain/entities/area_protegida_entity.dart';
 
 class AreasMapScreen extends StatelessWidget {
@@ -38,7 +39,7 @@ class AreasMapScreen extends StatelessWidget {
     }).toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Mapa de Áreas Protegidas")),
+      appBar: AppBar(title: const Text("Mapa de Áreas Protegidas", style: TextStyle(color: AppColors.primaryColor,fontWeight: FontWeight.bold,fontSize: 25, ),)),
       body: FlutterMap(
         options: MapOptions(
           initialCenter: initialCenter,
@@ -47,8 +48,6 @@ class AreasMapScreen extends StatelessWidget {
         children: [
           TileLayer(
             urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-            // IMPORTANTÍSIMO: pon tu package real para no ser bloqueado por OSM
-            userAgentPackageName: 'com.tuempresa.tuapp',
           ),
           MarkerLayer(markers: markers),
         ],

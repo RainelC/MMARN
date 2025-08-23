@@ -5,8 +5,9 @@ import '../../domain/entities/message.dart';
 
 class HomeSlider extends StatefulWidget {
   final List<Message> messages;
+  final double porcentaje;
 
-  const HomeSlider({super.key, required this.messages});
+  const HomeSlider({super.key, required this.messages, required this.porcentaje});
 
   @override
   State<HomeSlider> createState() => _HomeSliderState();
@@ -44,7 +45,7 @@ class _HomeSliderState extends State<HomeSlider> {
     final height = MediaQuery.of(context).size.height; // altura total de pantalla
 
     return SizedBox(
-      height: height * 0.65, // ocupa el 70% de la pantalla
+      height: height * widget.porcentaje,
       child: Stack(
         children: [
           PageView.builder(
